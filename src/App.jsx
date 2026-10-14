@@ -835,6 +835,58 @@ ${lines.join("\n\n")}
       setPdfProgress(null);
     }
   };
+  // "Save PDF" uses the EXACT same render pipeline as Print: every preview page
+  // is snapshotted at true A4 size (210×297mm, 8mm narrow margins, same header/
+  // footer/stickers/page numbers) — only the final step differs: instead of
+  // opening the print dialog we download the identical PDF bytes.
+  const handleSavePdf = async () => {
+    if (exportingPdf) return;
+    setExportingPdf(true);
+    setShowMenu(false);
+    setPlacingMode(false);
+    setPdfProgress(null);
+    try {
+      await Promise.allSettled(stickers.map((s) => loadDataUrlCached(s.url)));
+      const node = pageNodeRef.current;
+      if (!node || flowPages.length === 0) {
+        throw new Error("Nothing to save yet \u2014 add some entries first.");
+      }
+      const canvases = await buildAllPagesCanvases();
+      const fileName = `our-love-story-${(/* @__PURE__ */ new Date()).toISOString().split("T")[0]}.pdf`;
+      let saved = false;
+      try {
+        const res = await exportDiaryToA4Pdf({
+          pages: canvases.map((canvas) => ({ canvas })),
+          fileName,
+          onPageProgress: (done, total) => setPdfProgress({ done, total })
+        });
+        // If the exporter returned something without saving (e.g. a promise of
+        // a blob), fall through to the direct download below.
+        saved = typeof res === "number";
+      } catch (e) {
+        console.warn("[save-pdf] exporter save mode failed, downloading directly:", e);
+      }
+      if (!saved) {
+        const blob = await buildPdfBlobFromCanvases(canvases);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 6e4);
+      }
+      setImportStatus({ type: "success", message: `Saved ${canvases.length} A4 page${canvases.length === 1 ? "" : "s"} as PDF \u2014 identical to the preview \u2B07\uFE0F` });
+    } catch (err) {
+      console.error(err);
+      setImportStatus({ type: "error", message: err?.message || "Failed to save PDF." });
+    } finally {
+      setExportAllPages(false);
+      setExportingPdf(false);
+      setPdfProgress(null);
+    }
+  };
   const stickersForCurrentPage = (() => {
     const T = Math.max(flowPages.length, 1);
     return stickers.filter((s) => {
@@ -934,6 +986,37 @@ ${lines.join("\n\n")}
                   /* @__PURE__ */ jsxs("div", { children: [
                     /* @__PURE__ */ jsx("p", { className: "font-medium text-gray-800", children: "Export as Text" }),
                     /* @__PURE__ */ jsx("p", { className: "text-xs text-gray-500", children: "Readable diary format" })
+                  ] })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsx("div", { className: "border-t border-amber-100" }),
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                onClick: handlePrint,
+                disabled: exportingPdf || entries.length === 0,
+                className: "w-full px-4 py-3 text-left hover:bg-amber-50 flex items-center gap-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+                children: [
+                  /* @__PURE__ */ jsx("span", { className: "text-lg", children: "\u{1F5A8}\uFE0F" }),
+                  /* @__PURE__ */ jsxs("div", { children: [
+                    /* @__PURE__ */ jsx("p", { className: "font-medium text-gray-800", children: "Print All Pages" }),
+                    /* @__PURE__ */ jsx("p", { className: "text-xs text-gray-500", children: "Every A4 page, identical to the preview" })
+                  ] })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                onClick: handleSavePdf,
+                disabled: exportingPdf || entries.length === 0,
+                className: "w-full px-4 py-3 text-left hover:bg-amber-50 flex items-center gap-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed",
+                children: [
+                  /* @__PURE__ */ jsx("span", { className: "text-lg", children: "\u2B07\uFE0F" }),
+                  /* @__PURE__ */ jsxs("div", { children: [
+                    /* @__PURE__ */ jsx("p", { className: "font-medium text-gray-800", children: "Save as PDF" }),
+                    /* @__PURE__ */ jsx("p", { className: "text-xs text-gray-500", children: "Download all pages \u2014 same size & layout" })
                   ] })
                 ]
               }
@@ -1310,6 +1393,32 @@ ${lines.join("\n\n")}
               className: "bg-pink-500 hover:bg-pink-600 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2",
               title: "Add an image sticker from a link anywhere on the page",
               children: "\u{1F338} Add Image Sticker"
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: handlePrint,
+              disabled: exportingPdf,
+              className: "bg-amber-700 hover:bg-amber-800 disabled:opacity-40 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2",
+              title: "Print every A4 page — same size, margins & layout as this preview",
+              children: [
+                /* @__PURE__ */ jsx("span", { className: "text-lg", children: "\u{1F5A8}\uFE0F" }),
+                /* @__PURE__ */ jsx("span", { className: "hidden sm:inline", children: "Print All Pages" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              onClick: handleSavePdf,
+              disabled: exportingPdf,
+              className: "bg-orange-600 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-md hover:shadow-lg flex items-center gap-2",
+              title: "Download all pages as a PDF — identical to the preview (same A4 size & margins)",
+              children: [
+                /* @__PURE__ */ jsx("span", { className: "text-lg", children: "\u2B07\uFE0F" }),
+                /* @__PURE__ */ jsx("span", { className: "hidden sm:inline", children: "Save as PDF" })
+              ]
             }
           ),
           stickers.length > 0 && /* @__PURE__ */ jsxs(
