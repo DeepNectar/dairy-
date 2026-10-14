@@ -65,14 +65,11 @@ function App() {
   const [placingMode, setPlacingMode] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [pdfProgress, setPdfProgress] = useState(null);
-  // While true, ALL diary pages are mounted off-screen so Save/Print can
-  // snapshot each one exactly like the visible preview (one page at a time).
-  const [exportAllPages, setExportAllPages] = useState(false);
   const [flipDir, setFlipDir] = useState("next");
+  // The single visible preview sheet (.a4-page). Print/Save flips this exact
+  // node through every page index and snapshots it, so printed pages are
+  // guaranteed identical to the HTML preview.
   const pageNodeRef = useRef(null);
-  // Off-screen clones of the preview sheet (one per flow page) that exist only
-  // while exporting — renderSheetNode snapshots these exactly like the preview.
-  const exportPageRefs = useRef([]);
   useEffect(() => {
     let mounted = true;
     const initAuth = async () => {
@@ -699,10 +696,17 @@ ${lines.join("\n\n")}
     } catch {
     }
   };
-  // Render pipeline used by "Print": every preview
+  // Render pipeline used by "Print All Pages" / "Save as PDF": every preview
   // page is snapshotted exactly as shown (same layout, same header/footer image
   // sizes), so the printed/saved output is pixel-identical to the preview.
+  // The preview renders ONE .a4-page at a time (with its page number, stickers
+  // and scale transform), so here we temporarily flip that same node to each
+  // page index and snapshot it — guaranteeing identical pages.
   const buildAllPagesCanvases = async () => {
+    const liveNode = pageNodeRef.current;
+    if (!liveNode) {
+      throw new Error("Nothing to print yet \u2014 add some entries first.");
+    }
     const T = Math.max(flowPages.length, 1);
     const placementsByPage = Array.from({ length: T }, () => []);
     for (const s of stickers) {
@@ -710,40 +714,32 @@ ${lines.join("\n\n")}
         if (pl.page >= 0 && pl.page < T) placementsByPage[pl.page].push(pl);
       }
     }
-    // Mount ALL pages off-screen (the preview shows one at a time) so every
-    // sheet can be snapshotted exactly like the visible preview.
-    setExportAllPages(true);
-    await new Promise((r) => requestAnimationFrame(() => r()));
-    await new Promise((r) => requestAnimationFrame(() => r()));
-    await waitDiaryImagesSettled();
-    const liveNode = pageNodeRef.current;
-    // Prefer the dedicated off-screen clones; fall back to any `.a4-page` nodes
-    // found in the DOM, and finally to rendering the live page for every index
-    // (renderSheetNode re-injects each page's flow blocks into the clone, so the
-    // snapshot is still correct even when no clones are mounted).
-    let targets = exportPageRefs.current.filter(Boolean);
-    if (targets.length === 0) {
-      targets = Array.from(document.querySelectorAll(".a4-page")).filter((n) => n !== liveNode);
-    }
+    const prevPage = currentPage;
     const canvases = [];
     let lastDone = 0;
-    const T2 = Math.max(targets.length, flowPages.length, 1);
-    for (let p = 0; p < T2; p++) {
-      const target = targets[p] ?? liveNode;
-      if (!target) continue;
-      const canvas = await renderSheetNode(target, {
-        prepare: printClone,
-        pageIndex: p,
-        flowPages,
-        stickerPlacements: placementsByPage[p] ?? []
-      });
-      canvases.push(canvas);
-      if (p + 1 === T2 || p + 1 - lastDone >= 3) {
-        lastDone = p + 1;
-        setPdfProgress({ done: lastDone, total: T2 });
-        // Yield so the progress UI repaints and the main thread stays responsive.
-        await new Promise((r) => setTimeout(r, 0));
+    try {
+      for (let p = 0; p < T; p++) {
+        // Flip the visible preview sheet to page p and let React commit + paint.
+        setCurrentPage(p);
+        await new Promise((r) => requestAnimationFrame(() => r()));
+        await new Promise((r) => requestAnimationFrame(() => r()));
+        await waitDiaryImagesSettled();
+        const canvas = await renderSheetNode(liveNode, {
+          prepare: printClone,
+          pageIndex: p,
+          flowPages,
+          stickerPlacements: placementsByPage[p] ?? []
+        });
+        canvases.push(canvas);
+        if (p + 1 === T || p + 1 - lastDone >= 3) {
+          lastDone = p + 1;
+          setPdfProgress({ done: lastDone, total: T });
+          // Yield so the progress UI repaints and the main thread stays responsive.
+          await new Promise((r) => setTimeout(r, 0));
+        }
       }
+    } finally {
+      setCurrentPage(prevPage);
     }
     if (canvases.length === 0) {
       throw new Error("Nothing to export yet \u2014 add some entries first.");
@@ -830,7 +826,6 @@ ${lines.join("\n\n")}
       console.error(err);
       setImportStatus({ type: "error", message: err?.message || "Failed to print." });
     } finally {
-      setExportAllPages(false);
       setExportingPdf(false);
       setPdfProgress(null);
     }
@@ -882,7 +877,6 @@ ${lines.join("\n\n")}
       console.error(err);
       setImportStatus({ type: "error", message: err?.message || "Failed to save PDF." });
     } finally {
-      setExportAllPages(false);
       setExportingPdf(false);
       setPdfProgress(null);
     }
