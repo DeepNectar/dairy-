@@ -68,9 +68,9 @@
 /* Header photo: fixed small square so it always fits inside the band and
    never stretches the header (which used to squeeze the page data). */
 .ls-header-photo {
-  flex: 0 0 18mm;
-  width: 18mm;
-  height: 18mm;
+  flex: 0 0 16mm !important;
+  width: 16mm !important;
+  height: 16mm !important;
   border-radius: 8px;
   overflow: hidden;
   border: 1.5px solid #fb7185;
@@ -78,12 +78,12 @@
   background: #fff1f2;
 }
 .ls-header-photo img {
-  width: 18mm;
-  height: 18mm;
-  max-width: 18mm;
-  max-height: 18mm;
-  object-fit: cover;
-  display: block;
+  width: 16mm !important;
+  height: 16mm !important;
+  max-width: 16mm !important;
+  max-height: 16mm !important;
+  object-fit: cover !important;
+  display: block !important;
 }
 .ls-header-text { flex: 1 1 auto; min-width: 0; text-align: center; }
 .ls-title {
@@ -130,20 +130,23 @@
 }
 .ls-sign {
   flex: 0 1 auto;
-  max-width: 45mm;
-  height: 12mm;
+  width: 42mm;
+  max-width: 42mm !important;
+  height: 10mm !important;
+  max-height: 10mm !important;
+  overflow: hidden;
   text-align: center;
 }
 /* Signature images kept small & height-bounded so the footer band never
    grows and every page's data fits comfortably. */
 .ls-sign img {
-  max-height: 12mm;
-  height: 12mm;
-  max-width: 45mm;
-  width: auto;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto;
+  max-height: 10mm !important;
+  height: 10mm !important;
+  max-width: 42mm !important;
+  width: auto !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
 }
 

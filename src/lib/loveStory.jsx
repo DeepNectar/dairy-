@@ -7,9 +7,58 @@ const SIGNATURE_LINKS = [
 ];
 const headerPhotoSrc = resolveImageUrl(HEADER_PHOTO_LINK, 900);
 const signatureSrcs = SIGNATURE_LINKS.map((l) => resolveImageUrl(l, 700));
+// Inline (element.style) sizing — applied directly on the <img> elements so the
+// header photo and footer signatures stay small & perfectly fitted EVEN IF an
+// external/bundled stylesheet overrides the rules in src/index.css. Inline
+// styles beat any class-based CSS, so the bands can never grow oversized.
+const FIXED_HEADER_IMG_STYLE = {
+  width: "16mm",
+  height: "16mm",
+  maxWidth: "16mm",
+  maxHeight: "16mm",
+  objectFit: "cover",
+  display: "block"
+};
+const FIXED_SIGN_IMG_STYLE = {
+  width: "auto",
+  height: "10mm",
+  maxWidth: "42mm",
+  maxHeight: "10mm",
+  objectFit: "contain",
+  display: "block",
+  margin: "0 auto"
+};
+const FIXED_HEADER_BAND_STYLE = {
+  alignItems: "center",
+  gap: "2.5mm",
+  marginBottom: "1.5mm",
+  paddingBottom: "1.2mm"
+};
+const FIXED_HEADER_PHOTO_BOX_STYLE = {
+  flex: "0 0 16mm",
+  width: "16mm",
+  height: "16mm",
+  maxWidth: "16mm",
+  maxHeight: "16mm",
+  overflow: "hidden"
+};
+const FIXED_FOOTER_BAND_STYLE = {
+  alignItems: "flex-end",
+  gap: "4mm",
+  marginTop: "1.5mm",
+  paddingTop: "1mm"
+};
+const FIXED_SIGN_BOX_STYLE = {
+  flex: "0 1 auto",
+  width: "42mm",
+  maxWidth: "42mm",
+  height: "10mm",
+  maxHeight: "10mm",
+  overflow: "hidden"
+};
 function LoveStoryHeader() {
-  return /* @__PURE__ */ jsxs("div", { className: "ls-header", children: [
-    /* @__PURE__ */ jsx("div", { className: "ls-header-photo", children: /* @__PURE__ */ jsx(RobustImg, { src: HEADER_PHOTO_LINK, widthHint: 900, alt: "us", draggable: false }) }),
+  return /* @__PURE__ */ jsxs("div", { className: "ls-header", style: FIXED_HEADER_BAND_STYLE, children: [
+    /* @__PURE__ */ jsx("div", { className: "ls-header-photo", style: FIXED_HEADER_PHOTO_BOX_STYLE, children: /* @__PURE__ */ jsx(RobustImg, { src: HEADER_PHOTO_LINK, widthHint: 900, alt: "us", draggable: false, style: FIXED_HEADER_IMG_STYLE }) }),
     /* @__PURE__ */ jsxs("div", { className: "ls-header-text", children: [
       /* @__PURE__ */ jsx("h1", { className: "ls-title", children: "\u{1F495} OUR LOVE STORY \u{1F495}" }),
       /* @__PURE__ */ jsxs("p", { className: "ls-sub", children: [
@@ -29,9 +78,9 @@ function LoveStoryHeader() {
   ] });
 }
 function LoveStoryFooter() {
-  return /* @__PURE__ */ jsxs("div", { className: "ls-footer", children: [
-    /* @__PURE__ */ jsx("div", { className: "ls-sign", children: /* @__PURE__ */ jsx(RobustImg, { src: SIGNATURE_LINKS[0], widthHint: 700, alt: "signature", draggable: false }) }),
-    /* @__PURE__ */ jsx("div", { className: "ls-sign", children: /* @__PURE__ */ jsx(RobustImg, { src: SIGNATURE_LINKS[1], widthHint: 700, alt: "signature", draggable: false }) })
+  return /* @__PURE__ */ jsxs("div", { className: "ls-footer", style: FIXED_FOOTER_BAND_STYLE, children: [
+    /* @__PURE__ */ jsx("div", { className: "ls-sign", style: FIXED_SIGN_BOX_STYLE, children: /* @__PURE__ */ jsx(RobustImg, { src: SIGNATURE_LINKS[0], widthHint: 700, alt: "signature", draggable: false, style: FIXED_SIGN_IMG_STYLE }) }),
+    /* @__PURE__ */ jsx("div", { className: "ls-sign", style: FIXED_SIGN_BOX_STYLE, children: /* @__PURE__ */ jsx(RobustImg, { src: SIGNATURE_LINKS[1], widthHint: 700, alt: "signature", draggable: false, style: FIXED_SIGN_IMG_STYLE }) })
   ] });
 }
 export {
