@@ -195,6 +195,40 @@
 .sticker-nudges button:hover { background: rgba(0, 0, 0, 0.85); }
 .diary-sticker:hover .sticker-nudges { display: flex; }
 
+/* Cover page block (first A4 page) */
+.pg-cover {
+  text-align: center;
+  padding: 10mm 4mm 6mm;
+  border: 2px solid #fcd34d;
+  border-radius: 10px;
+  background: linear-gradient(to bottom, #fffbeb, #ffffff);
+  margin-bottom: 4mm;
+}
+.pg-cover-emoji { font-size: 26pt; margin-bottom: 2mm; }
+.pg-cover-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18pt;
+  font-weight: 800;
+  color: #be123c;
+  margin: 0 0 2mm;
+}
+.pg-cover-sub {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 12pt;
+  font-weight: 700;
+  color: #9d174d;
+  margin: 0 0 2mm;
+}
+.pg-cover-rule {
+  color: #f59e0b;
+  font-weight: 800;
+  font-size: 8pt;
+  overflow-wrap: anywhere;
+  margin-bottom: 3mm;
+}
+.pg-cover-date { font-size: 11pt; color: #78350f; margin: 0 0 1.5mm; }
+.pg-cover-note { font-size: 9pt; font-style: italic; color: #b45309; margin: 0; }
+
 /* Entry blocks inside a page */
 .pg-heading {
   font-family: Georgia, 'Times New Roman', serif;
@@ -206,6 +240,36 @@
   margin: 6px 0 6px;
   break-after: avoid;
 }
+.pg-hnum {
+  display: inline-block;
+  background: #f59e0b;
+  color: #ffffff;
+  border-radius: 9999px;
+  min-width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  font-size: 10pt;
+  margin-right: 6px;
+}
+.pg-hcount {
+  color: #b45309;
+  font-size: 10pt;
+  font-weight: 600;
+  margin-left: 4px;
+}
+.pg-summary-title { border-bottom-color: #f43f5e; color: #be123c; }
+.pg-summary-list { list-style: none; margin: 4px 0 8px; padding: 0; }
+.pg-summary-list li {
+  position: relative;
+  padding-left: 16px;
+  margin-bottom: 4px;
+  font-size: 10pt;
+  color: #451a03;
+  line-height: 1.45;
+}
+.pg-bullet { position: absolute; left: 2px; color: #f43f5e; font-weight: 800; }
+.pg-sum-end { text-align: center; color: #f59e0b; font-weight: 800; font-size: 8pt; overflow-wrap: anywhere; }
 .pg-entry {
   border: 1px solid #f3d9a4;
   border-radius: 6px;
